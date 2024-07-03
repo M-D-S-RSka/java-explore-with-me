@@ -1,7 +1,9 @@
 package ru.practicum.rest;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,30 +20,24 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-@RestController
+@Controller
 @RequiredArgsConstructor
-public class StatsRestHandler {
+public class StatsRestController {
     private final StatsService service;
+    private final String appName = "ewm-main-service";
     private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @PostMapping("/hit")
     public ResponseEntity<Object> saveHit(@RequestBody @Valid HitInput hitInput) {
-        service.saveHit(hitInput);
+        service.saveHit(hitInput, appName);
         return ResponseEntity.created(URI.create("/hit")).build();
     }
 
     @GetMapping("/stats")
-    public List<HitOutput> getHits(@RequestParam String start,
-                                   @RequestParam String end,
-                                   @RequestParam(required = false, defaultValue = "") List<String> uris,
-                                   @RequestParam(required = false, defaultValue = "false") boolean unique) {
-
-        try {
-            var startTime = LocalDateTime.parse(start, dtf);
-            var endTime = LocalDateTime.parse(end, dtf);
-            return service.getHits(startTime, endTime, uris, unique);
-        } catch (IllegalArgumentException e) {
-            throw new ValidationException("Wrong time format");
-        }
+    public List<HitOutput> getHits(@RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime start,
+                                   @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime end,
+                                   @RequestParam(defaultValue = "") List<String> uris,
+                                   @RequestParam(defaultValue = "false") boolean unique) {
+        return service.getHits(start, end, uris, unique, appName);
     }
 }
