@@ -4,7 +4,6 @@ import org.springframework.data.jpa.domain.Specification;
 import ru.practicum.db.model.DbHitData;
 
 import javax.persistence.criteria.CriteriaBuilder;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -25,14 +24,4 @@ public class HitSpec {
             return inClause;
         });
     }
-
-    public static Specification<DbHitData> getHitOutput(LocalDateTime startTime,
-                                                        LocalDateTime endTime,
-                                                        List<String> uris,
-                                                        boolean unique,
-                                                        String appName) {
-        return Specification
-                .where(HitSpec.getHitOutput(startTime, endTime, uris, unique, appName));
-    }
-
 }

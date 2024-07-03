@@ -9,7 +9,11 @@ import ru.practicum.model.HitOutput;
 
 import javax.validation.ValidationException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,9 +37,26 @@ public class StatsService {
         if (!endTime.isAfter(startTime)) {
             throw new ValidationException("Invalid time");
         }
+        Map<String, List<DbHitData>> rawHits;
+        if (!uris.isEmpty()) {
+            rawHits = hitDataDao.searchByUri(uris).stream().collect(Collectors.groupingBy(DbHitData::getUri));
+        } else {
+            rawHits = hitDataDao.findAllHits().stream().collect(Collectors.groupingBy(DbHitData::getUri));
+        }
 
-        List<HitOutput> res = hitDataDao.getHitOutput(startTime, endTime, uris, unique, appName);
+        var res = new ArrayList<HitOutput>();
 
-        return res;
+        for (var pair : rawHits.entrySet()) {
+            var hitsStream = pair.getValue().stream().map(DbHitData::getIp);
+            if (unique) hitsStream = hitsStream.distinct();
+            var hits = hitsStream.collect(Collectors.toList());
+            var item = new HitOutput();
+            item.setApp(appName);
+            item.setUri(pair.getKey());
+            item.setHits((long) hits.size());
+            res.add(item);
+        }
+
+        return res.stream().sorted(Comparator.comparingLong(hitOutput -> -hitOutput.getHits())).collect(Collectors.toList());
     }
 }
