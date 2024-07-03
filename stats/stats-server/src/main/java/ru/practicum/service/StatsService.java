@@ -2,7 +2,7 @@ package ru.practicum.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.practicum.db.Dao;
+import ru.practicum.db.HitDataDao;
 import ru.practicum.db.model.DbHitData;
 import ru.practicum.model.HitInput;
 import ru.practicum.model.HitOutput;
@@ -20,11 +20,11 @@ import java.util.stream.Collectors;
 public class StatsService {
 
 
-    private final Dao dao;
+    private final HitDataDao hitDataDao;
     private final HitsMapper hitsMapper;
 
     public void saveHit(HitInput hitInput) {
-        dao.saveHit(hitsMapper.fromInput(hitInput));
+        hitDataDao.saveHit(hitsMapper.fromInput(hitInput));
     }
 
     public List<HitOutput> getHits(LocalDateTime startTime,
@@ -36,9 +36,9 @@ public class StatsService {
         }
         Map<String, List<DbHitData>> rawHits;
         if (!uris.isEmpty()) {
-            rawHits = dao.searchByUri(uris).stream().collect(Collectors.groupingBy(DbHitData::getUri));
+            rawHits = hitDataDao.searchByUri(uris).stream().collect(Collectors.groupingBy(DbHitData::getUri));
         } else {
-            rawHits = dao.findAllHits().stream().collect(Collectors.groupingBy(DbHitData::getUri));
+            rawHits = hitDataDao.findAllHits().stream().collect(Collectors.groupingBy(DbHitData::getUri));
         }
 
         var res = new ArrayList<HitOutput>();
@@ -48,7 +48,8 @@ public class StatsService {
             if (unique) hitsStream = hitsStream.distinct();
             var hits = hitsStream.collect(Collectors.toList());
             var item = new HitOutput();
-            item.setApp("ewm-main-service");
+            DbHitData dbHitData = new DbHitData();
+            item.setApp(dbHitData.getApp());
             item.setUri(pair.getKey());
             item.setHits((long) hits.size());
             res.add(item);

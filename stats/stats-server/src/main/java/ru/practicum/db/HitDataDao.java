@@ -9,7 +9,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class Dao {
+public class HitDataDao {
 
     private final StatsRepo statsRepo;
 
