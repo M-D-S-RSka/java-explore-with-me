@@ -20,28 +20,25 @@ import java.util.stream.Collectors;
 public class StatsService {
 
 
-    private final HitDataDao hitDataDao;
+    private final HitDataDao dao;
     private final HitsMapper hitsMapper;
 
-    public void saveHit(HitInput hitInput, String appName) {
-        DbHitData dbHitData = hitsMapper.fromInput(hitInput);
-        dbHitData.setApp(appName);
-        hitDataDao.saveHit(dbHitData);
+    public void saveHit(HitInput hitInput) {
+        dao.saveHit(hitsMapper.fromInput(hitInput));
     }
 
     public List<HitOutput> getHits(LocalDateTime startTime,
                                    LocalDateTime endTime,
                                    List<String> uris,
-                                   boolean unique,
-                                   String appName) {
+                                   boolean unique) {
         if (!endTime.isAfter(startTime)) {
             throw new ValidationException("Invalid time");
         }
         Map<String, List<DbHitData>> rawHits;
         if (!uris.isEmpty()) {
-            rawHits = hitDataDao.searchByUri(uris).stream().collect(Collectors.groupingBy(DbHitData::getUri));
+            rawHits = dao.searchByUri(uris).stream().collect(Collectors.groupingBy(DbHitData::getUri));
         } else {
-            rawHits = hitDataDao.findAllHits().stream().collect(Collectors.groupingBy(DbHitData::getUri));
+            rawHits = dao.findAllHits().stream().collect(Collectors.groupingBy(DbHitData::getUri));
         }
 
         var res = new ArrayList<HitOutput>();
@@ -51,7 +48,7 @@ public class StatsService {
             if (unique) hitsStream = hitsStream.distinct();
             var hits = hitsStream.collect(Collectors.toList());
             var item = new HitOutput();
-            item.setApp(appName);
+            item.setApp("ewm-main-service");
             item.setUri(pair.getKey());
             item.setHits((long) hits.size());
             res.add(item);
