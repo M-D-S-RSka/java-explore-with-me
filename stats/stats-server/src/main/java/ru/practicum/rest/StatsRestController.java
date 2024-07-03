@@ -3,11 +3,11 @@ package ru.practicum.rest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.model.HitInput;
 import ru.practicum.model.HitOutput;
 import ru.practicum.service.StatsService;
@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-@RestController
+@Controller
 @RequiredArgsConstructor
 public class StatsRestController {
     private final StatsService service;
@@ -34,9 +34,8 @@ public class StatsRestController {
     @GetMapping("/stats")
     public List<HitOutput> getHits(@RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime start,
                                    @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime end,
-                                   @RequestParam(required = false, defaultValue = "") List<String> uris,
-                                   @RequestParam(required = false, defaultValue = "false") boolean unique) {
-
+                                   @RequestParam(defaultValue = "") List<String> uris,
+                                   @RequestParam(defaultValue = "false") boolean unique) {
         try {
             return service.getHits(start, end, uris, unique);
         } catch (IllegalArgumentException e) {

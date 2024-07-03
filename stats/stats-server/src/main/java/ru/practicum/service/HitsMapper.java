@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import ru.practicum.db.model.DbHitData;
 import ru.practicum.model.HitInput;
 
-@Component
+//@Component
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING, injectionStrategy = InjectionStrategy.FIELD)
 public interface HitsMapper {
     DbHitData fromInput(HitInput hitInput);
