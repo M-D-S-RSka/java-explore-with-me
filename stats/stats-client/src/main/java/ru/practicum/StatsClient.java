@@ -2,8 +2,8 @@ package ru.practicum;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import ru.practicum.model.HitInput;
 import org.springframework.web.client.RestTemplate;
+import ru.practicum.model.HitInput;
 import ru.practicum.model.HitOutput;
 
 public class StatsClient {

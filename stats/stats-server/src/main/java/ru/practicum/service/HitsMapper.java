@@ -3,7 +3,6 @@ package ru.practicum.service;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
-import org.springframework.stereotype.Component;
 import ru.practicum.db.model.DbHitData;
 import ru.practicum.model.HitInput;
 
