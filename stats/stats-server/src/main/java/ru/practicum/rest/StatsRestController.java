@@ -1,6 +1,7 @@
 package ru.practicum.rest;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,15 +32,13 @@ public class StatsRestController {
     }
 
     @GetMapping("/stats")
-    public List<HitOutput> getHits(@RequestParam String start,
-                                   @RequestParam String end,
+    public List<HitOutput> getHits(@RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime start,
+                                   @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime end,
                                    @RequestParam(required = false, defaultValue = "") List<String> uris,
                                    @RequestParam(required = false, defaultValue = "false") boolean unique) {
 
         try {
-            var startTime = LocalDateTime.parse(start, dtf);
-            var endTime = LocalDateTime.parse(end, dtf);
-            return service.getHits(startTime, endTime, uris, unique);
+            return service.getHits(start, end, uris, unique);
         } catch (IllegalArgumentException e) {
             throw new ValidationException("Wrong time format");
         }
