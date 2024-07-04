@@ -9,10 +9,8 @@ import ru.practicum.model.HitOutput;
 
 import javax.validation.ValidationException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,26 +32,41 @@ public class StatsService {
         if (!endTime.isAfter(startTime)) {
             throw new ValidationException("Invalid time");
         }
-        Map<String, List<DbHitData>> rawHits;
+
+        List<HitOutput> res;
+
         if (!uris.isEmpty()) {
-            rawHits = dao.searchByUri(uris).stream().collect(Collectors.groupingBy(DbHitData::getUri));
+            res = dao.searchByUri(uris).stream()
+                    .collect(Collectors.groupingBy(DbHitData::getUri,
+                            Collectors.mapping(DbHitData::getIp, Collectors.toList())))
+                    .entrySet().stream()
+                    .map(entry -> {
+                        HitOutput item = new HitOutput();
+                        item.setApp("ewm-main-service");
+                        item.setUri(entry.getKey());
+                        item.setHits((long) (unique ? entry.getValue().stream().distinct().count() : entry.getValue()
+                                .size()));
+                        return item;
+                    })
+                    .sorted(Comparator.comparingLong(HitOutput::getHits).reversed())
+                    .collect(Collectors.toList());
         } else {
-            rawHits = dao.findAllHits().stream().collect(Collectors.groupingBy(DbHitData::getUri));
+            res = dao.findAllHits().stream()
+                    .collect(Collectors.groupingBy(DbHitData::getUri,
+                            Collectors.mapping(DbHitData::getIp, Collectors.toList())))
+                    .entrySet().stream()
+                    .map(entry -> {
+                        HitOutput item = new HitOutput();
+                        item.setApp("ewm-main-service");
+                        item.setUri(entry.getKey());
+                        item.setHits((long) (unique ? entry.getValue().stream().distinct().count() : entry.getValue()
+                                .size()));
+                        return item;
+                    })
+                    .sorted(Comparator.comparingLong(HitOutput::getHits).reversed())
+                    .collect(Collectors.toList());
         }
 
-        var res = new ArrayList<HitOutput>();
-
-        for (var pair : rawHits.entrySet()) {
-            var hitsStream = pair.getValue().stream().map(DbHitData::getIp);
-            if (unique) hitsStream = hitsStream.distinct();
-            var hits = hitsStream.collect(Collectors.toList());
-            var item = new HitOutput();
-            item.setApp("ewm-main-service");
-            item.setUri(pair.getKey());
-            item.setHits((long) hits.size());
-            res.add(item);
-        }
-
-        return res.stream().sorted(Comparator.comparingLong(hitOutput -> -hitOutput.getHits())).collect(Collectors.toList());
+        return res;
     }
 }
