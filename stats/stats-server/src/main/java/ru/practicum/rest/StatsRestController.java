@@ -35,10 +35,9 @@ public class StatsRestController {
     public List<HitOutput> getHits(@RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime start,
                                    @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime end,
                                    @RequestParam(defaultValue = "") List<String> uris,
-                                   @RequestParam(defaultValue = "false") boolean unique,
-                                   @RequestParam String appName) {
+                                   @RequestParam(defaultValue = "false") boolean unique) {
         try {
-            return service.getHits(start, end, uris, unique, appName);
+            return service.getHits(start, end, uris, unique);
         } catch (IllegalArgumentException e) {
             throw new ValidationException("Wrong time format");
         }

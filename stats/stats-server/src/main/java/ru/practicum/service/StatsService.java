@@ -30,7 +30,7 @@ public class StatsService {
     public List<HitOutput> getHits(LocalDateTime startTime,
                                    LocalDateTime endTime,
                                    List<String> uris,
-                                   boolean unique, String appName) {
+                                   boolean unique) {
         if (!endTime.isAfter(startTime)) {
             throw new ValidationException("Invalid time");
         }
@@ -48,7 +48,7 @@ public class StatsService {
             if (unique) hitsStream = hitsStream.distinct();
             var hits = hitsStream.collect(Collectors.toList());
             var item = new HitOutput();
-            item.setApp(appName);
+            item.setApp("ewm-main-service");
             item.setUri(pair.getKey());
             item.setHits((long) hits.size());
             res.add(item);
