@@ -27,4 +27,8 @@ public class HitDataDao {
     public void saveHit(DbHitData hitData) {
         statsRepo.save(hitData);
     }
+
+    public String getAppFromDatabase() {
+        return statsRepo.getAppFromDatabase(); // Пример возврата значения app из БД
+    }
 }
