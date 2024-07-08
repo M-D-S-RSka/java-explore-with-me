@@ -40,7 +40,7 @@ public class StatsClient {
             uris.append(String.format("&uris=%s", it));
         });
         try {
-            var url = new URL(String.format("http://localhost:9090/stats?start=%s&end=%s%s&unique=%s", startTime.format(dtf), endTime.format(dtf), uris, unique));
+            var url = new URL(String.format("http://localhost:9090/stats?start=%s&end=%s%s&unique=%s", startTime.format(dtf), endTime.format(dtf), uris.toString(), unique));
             var con = url.openConnection();
             var baos = new ByteArrayOutputStream();
             try (var is = con.getInputStream()) {
