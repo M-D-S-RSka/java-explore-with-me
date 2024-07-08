@@ -27,10 +27,6 @@ public class StatsService {
         dao.saveHit(hitsMapper.fromInput(hitInput));
     }
 
-    public String getAppFromDatabase() {
-        return dao.getAppFromDatabase();
-    }
-
     public List<HitOutput> getHits(LocalDateTime startTime,
                                    LocalDateTime endTime,
                                    List<String> uris,
@@ -52,7 +48,7 @@ public class StatsService {
             if (unique) hitsStream = hitsStream.distinct();
             var hits = hitsStream.collect(Collectors.toList());
             var item = new HitOutput();
-            item.setApp(getAppFromDatabase());
+            item.setApp("ewm-main-service");
             item.setUri(pair.getKey());
             item.setHits((long) hits.size());
             res.add(item);

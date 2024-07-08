@@ -6,5 +6,4 @@ import ru.practicum.db.model.DbHitData;
 
 public interface StatsRepo extends JpaRepository<DbHitData, Long>, JpaSpecificationExecutor<DbHitData> {
 
-    String getAppFromDatabase();
 }
