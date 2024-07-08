@@ -10,6 +10,7 @@ import ru.practicum.model.HitOutput;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -40,13 +41,13 @@ public class StatsClient {
             uris.append(String.format("&uris=%s", it));
         });
         try {
-            var url = new URL(String.format("http://localhost:9090/stats?start=%s&end=%s%s&unique=%s", startTime.format(dtf), endTime.format(dtf), uris.toString(), unique));
+            var url = new URL(String.format("http://localhost:9090/stats?start=%s&end=%s%s&unique=%s", startTime.format(dtf), endTime.format(dtf), uris, unique));
             var con = url.openConnection();
             var baos = new ByteArrayOutputStream();
             try (var is = con.getInputStream()) {
                 is.transferTo(baos);
             }
-            var str = baos.toString();
+            var str = baos.toString(StandardCharsets.UTF_8);
             var listType = new TypeToken<ArrayList<HitOutput>>() {
             }.getType();
             return gson.<ArrayList<HitOutput>>fromJson(str, listType);
