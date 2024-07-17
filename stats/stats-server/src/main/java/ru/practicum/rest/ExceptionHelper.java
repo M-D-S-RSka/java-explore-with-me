@@ -28,10 +28,23 @@ public class ExceptionHelper {
         return Map.of("error", e.getMessage());
     }
 
-    @ExceptionHandler(Throwable.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public Map<String, String> handleAllExceptions(final Throwable e) {
-        log.error("Internal Server Error: {}", e.getMessage(), e);
-        return Map.of("error", "Internal Server Error");
-    }
+//    @ExceptionHandler(Throwable.class)
+//    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+//    public Map<String, String> handleAllExceptions(final Throwable e) {
+//        log.error("Internal Server Error: {}", e.getMessage(), e);
+//        return Map.of("error", "Internal Server Error");
+//    }
+//
+
+    //  Рекомендованный на прошлом ревью хэндлер перехватывает все подряд и возвращает ошибку "Internal Server Error"
+
+//     1.  AssertionError  Ответ должен содержать код статуса 400
+//    expected response to have status reason 'BAD REQUEST' but got 'INTERNAL SERVER ERROR'
+//    at assertion:0 in test-script
+//    inside "Тест на верную обработку запроса без даты начала"
+//
+//            2.  AssertionError  Ответ должен содержать код статуса 400
+//    expected response to have status reason 'BAD REQUEST' but got 'INTERNAL SERVER ERROR'
+//    at assertion:0 in test-script
+//    inside "Тест на верную обработку запроса без даты конца"
 }
