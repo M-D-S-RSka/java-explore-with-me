@@ -14,12 +14,12 @@ import java.util.Map;
 @Slf4j
 public class ExceptionHelper {
 
-    @ExceptionHandler(Throwable.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public Map<String, String> handleAllExceptions(final Throwable e) {
-        log.error("Internal Server Error: {}", e.getMessage(), e);
-        return Map.of("error", "Internal Server Error");
-    }
+//    @ExceptionHandler(Throwable.class)
+//    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+//    public Map<String, String> handleAllExceptions(final Throwable e) {
+//        log.error("Internal Server Error: {}", e.getMessage(), e);
+//        return Map.of("error", "Internal Server Error");
+//    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
