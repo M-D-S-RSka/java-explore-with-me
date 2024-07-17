@@ -50,7 +50,7 @@ public class StatsService {
             var item = new HitOutput();
             item.setApp("ewm-main-service");
             item.setUri(pair.getKey());
-            item.setHits((long) hits.size());
+            item.setHits(hits.size());
             res.add(item);
         }
 
