@@ -33,19 +33,4 @@ public class StatsRestController {
                                    @RequestParam(defaultValue = "false") boolean unique) {
         return service.getHits(start, end, uris, unique);
     }
-
-//    @GetMapping("/stats")
-//    public List<HitOutput> getHits(@RequestParam String start,
-//                                   @RequestParam String end,
-//                                   @RequestParam(required = false, defaultValue = "") List<String> uris,
-//                                   @RequestParam(required = false, defaultValue = "false") boolean unique) {
-//
-//        try {
-//            var startTime = LocalDateTime.parse(start, dtf);
-//            var endTime = LocalDateTime.parse(end, dtf);
-//            return service.getHits(startTime, endTime, uris, unique);
-//        } catch (IllegalArgumentException e) {
-//            throw new ValidationException("Wrong time format");
-//        }
-//    }
 }
