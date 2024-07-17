@@ -6,5 +6,5 @@ import lombok.Data;
 public class HitOutput {
     private String app;
     private String uri;
-    private Long hits;
+    private Integer hits;
 }
