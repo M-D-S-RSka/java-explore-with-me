@@ -5,6 +5,7 @@ import lombok.Data;
 import ru.practicum.explore.utilits.UserEventDate;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PositiveOrZero;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
@@ -22,6 +23,7 @@ public class EventCreateDto {
     @UserEventDate
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
+    @NotNull
     private Location location;
     private boolean paid;
     @PositiveOrZero
