@@ -38,19 +38,15 @@ public class CategoryService {
     }
 
     public CategoryDto updateCategory(long catId, CategoryDto categoryDto) {
-        var oldCat = categoryRepo.findById(catId).orElse(null);
-        if (oldCat != null) {
-            try {
-                var cat = categoryRepo.save(categoryMapper.fromDto(categoryDto));
-                return categoryMapper.toDto(cat);
-            } catch (DataIntegrityViolationException e) {
-                if (oldCat.getName().equals(categoryDto.getName())) {
-                    return categoryDto;
-                }
-                throw new ConflictException("Category name is already used");
+        var oldCat = categoryRepo.findById(catId).orElseThrow(() -> new ValidationException("No such category was found"));
+        try {
+            var cat = categoryRepo.save(categoryMapper.fromDto(categoryDto));
+            return categoryMapper.toDto(cat);
+        } catch (DataIntegrityViolationException e) {
+            if (oldCat.getName().equals(categoryDto.getName())) {
+                return categoryDto;
             }
-        } else {
-            throw new ValidationException("No such category was found");
+            throw new ConflictException("Category name is already used");
         }
     }
 
