@@ -24,6 +24,7 @@ import ru.practicum.explore.model.event.EventUpdateUserDto;
 import ru.practicum.explore.model.event.Location;
 import ru.practicum.explore.model.exceptions.ConflictException;
 import ru.practicum.explore.model.exceptions.NotFoundException;
+import ru.practicum.explore.model.request.RequestDto;
 import ru.practicum.explore.model.request.RequestStatus;
 import ru.practicum.explore.model.user.User;
 import ru.practicum.model.HitOutput;
@@ -77,10 +78,11 @@ public class EventService {
         var uris = events.stream().map(it -> String.format("/events/%s", it.getId())).collect(Collectors.toList());
         var stats = statsClient.getHits(earliestTime, latestTime, uris, true).stream()
                 .collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
-
+        var countByEventIdMap = requestRepo.getCountByEventIdAndStatus(events.stream().map(Event::getId).collect(Collectors.toList()),
+                RequestStatus.CONFIRMED).stream().collect(Collectors.toMap(RequestDto::getEventId, RequestDto::getCount));
         return events.stream().map(event -> {
             Location location = gson.fromJson(event.getLocation(), Location.class);
-            return eventMapper.toOutput(event, location, requestRepo.countByEventAndStatus(event, RequestStatus.CONFIRMED), stats.getOrDefault(String.format("/events/%s", event.getId()), 0));
+            return eventMapper.toOutput(event, location, countByEventIdMap.getOrDefault(event.getId(), 0L), stats.getOrDefault(String.format("/events/%s", event.getId()), 0));
         }).collect(Collectors.toList());
     }
 
