@@ -11,7 +11,6 @@ import ru.practicum.explore.model.user.User;
 import ru.practicum.explore.model.user.UserDto;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,13 +34,13 @@ public class UserService {
         userRepo.deleteById(userId);
     }
 
-    public Set<UserDto> getUsers(List<Long> ids, int from, int size) {
+    public List<UserDto> getUsers(List<Long> ids, int from, int size) {
         if (ids.isEmpty()) {
             int page = from % size > 0 ? (from / size) + 1 : from / size;
             PageRequest pageRequest = PageRequest.of(page, size);
-            return userRepo.findAll(pageRequest).toList().stream().map(userMapper::toDto).collect(Collectors.toSet());
+            return userRepo.findAll(pageRequest).toList().stream().map(userMapper::toDto).collect(Collectors.toList());
         } else {
-            return userRepo.findByIdIn(ids).stream().map(userMapper::toDto).collect(Collectors.toSet());
+            return userRepo.findByIdIn(ids).stream().map(userMapper::toDto).collect(Collectors.toList());
         }
     }
 }

@@ -1,7 +1,6 @@
 package ru.practicum.explore.rest;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -29,12 +28,10 @@ import ru.practicum.explore.service.userService.UserService;
 import ru.practicum.explore.utilits.Constants;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Positive;
-import javax.validation.constraints.PositiveOrZero;
+import javax.validation.ValidationException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/admin")
@@ -59,9 +56,9 @@ public class AdminRestHandler {
     }
 
     @GetMapping("/users")
-    public Set<UserDto> getUsers(@RequestParam(defaultValue = "") List<Long> ids,
-                                 @RequestParam(defaultValue = "0") int from,
-                                 @RequestParam(defaultValue = "10") int size) {
+    public List<UserDto> getUsers(@RequestParam(required = false, defaultValue = "") List<Long> ids,
+                                  @RequestParam(required = false, defaultValue = "0") int from,
+                                  @RequestParam(required = false, defaultValue = "10") int size) {
         return userService.getUsers(ids, from, size);
     }
 
@@ -82,15 +79,20 @@ public class AdminRestHandler {
     }
 
     @GetMapping("/events")
-    public Set<EventOutput> getEventsAdmin(@RequestParam(required = false) List<Long> users,
-                                           @RequestParam(required = false) List<EventState> states,
-                                           @RequestParam(required = false) List<Long> categories,
-                                           @Valid @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") @RequestParam(required = false) LocalDateTime rangeStart,
-                                           @Valid @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") @RequestParam(required = false) LocalDateTime rangeEnd,
-                                           @Valid @PositiveOrZero @RequestParam(defaultValue = "0") int from,
-                                           @Valid @Positive @RequestParam(defaultValue = "10") int size) {
-
-        return eventService.searchEventAdmin(users, states, categories, rangeStart, rangeEnd, from, size);
+    public List<EventOutput> getEventsAdmin(@RequestParam(required = false) List<Long> users,
+                                            @RequestParam(required = false) List<EventState> states,
+                                            @RequestParam(required = false) List<Long> categories,
+                                            @RequestParam(required = false) String rangeStart,
+                                            @RequestParam(required = false) String rangeEnd,
+                                            @RequestParam(required = false, defaultValue = "0") int from,
+                                            @RequestParam(required = false, defaultValue = "10") int size) {
+        try {
+            var rangeStartTime = rangeStart == null ? null : LocalDateTime.parse(rangeStart, dtf);
+            var rangeEndTime = rangeEnd == null ? null : LocalDateTime.parse(rangeEnd, dtf);
+            return eventService.searchEventAdmin(users, states, categories, rangeStartTime, rangeEndTime, from, size);
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException("Wrong time format");
+        }
     }
 
     @PatchMapping("/events/{eventId}")
