@@ -33,6 +33,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -169,13 +170,13 @@ public class EventService {
         return result;
     }
 
-    public List<EventOutput> searchEventAdmin(List<Long> usersIds,
-                                              List<EventState> states,
-                                              List<Long> categoriesIds,
-                                              LocalDateTime rangeStart,
-                                              LocalDateTime rangeEnd,
-                                              int from,
-                                              int size) {
+    public Set<EventOutput> searchEventAdmin(List<Long> usersIds,
+                                             List<EventState> states,
+                                             List<Long> categoriesIds,
+                                             LocalDateTime rangeStart,
+                                             LocalDateTime rangeEnd,
+                                             int from,
+                                             int size) {
         var categories = categoriesIds == null ? null : categoryRepo.findByIdIn(categoriesIds);
         var users = usersIds == null ? null : userRepo.findByIdIn(usersIds);
         List<String> uris = new ArrayList<>();
@@ -188,7 +189,7 @@ public class EventService {
         return events.stream().map(event -> {
             Location location = gson.fromJson(event.getLocation(), Location.class);
             return eventMapper.toOutput(event, location, requestRepo.countByEventAndStatus(event, RequestStatus.CONFIRMED), (stats.getOrDefault(String.valueOf(event.getId()), 0)));
-        }).collect(Collectors.toList());
+        }).collect(Collectors.toSet());
     }
 
     public EventOutput getEventById(long eventId) {
