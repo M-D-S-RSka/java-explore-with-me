@@ -34,4 +34,11 @@ public class ErrorHandler {
         log.error(e.getMessage(), e);
         return Map.of("error", e.getMessage());
     }
+
+    @ExceptionHandler(Throwable.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public Map<String, String> allThrowable(final Exception e) {
+        log.error(e.getMessage(), e);
+        return Map.of("error", e.getMessage());
+    }
 }
