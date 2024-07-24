@@ -7,6 +7,7 @@ import ru.practicum.explore.model.event.Event;
 import ru.practicum.explore.model.event.EventState;
 import ru.practicum.explore.model.user.User;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface EventRepo extends PagingAndSortingRepository<Event, Long>, JpaSpecificationExecutor<Event> {
@@ -15,9 +16,8 @@ public interface EventRepo extends PagingAndSortingRepository<Event, Long>, JpaS
 
     Event findByInitiatorAndId(User initiator, Long id);
 
-    List<Event> findByIdIn(List<Long> ids);
+    List<Event> findByIdIn(Collection<Long> ids);
 
     Event findByIdAndState(Long id, EventState state);
-
 
 }
