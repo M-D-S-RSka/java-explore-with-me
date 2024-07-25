@@ -30,7 +30,8 @@ public class StatsRestController {
     public List<HitOutput> getHits(@RequestParam @Valid @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime start,
                                    @RequestParam @Valid @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime end,
                                    @RequestParam(defaultValue = "") List<String> uris,
-                                   @RequestParam(defaultValue = "false") boolean unique) {
-        return service.getHits(start, end, uris, unique);
+                                   @RequestParam(defaultValue = "false") boolean unique,
+                                   @RequestParam(defaultValue = "ewm-main-service") String appName) {
+        return service.getHits(start, end, uris, unique, appName);
     }
 }
