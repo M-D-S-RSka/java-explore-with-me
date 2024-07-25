@@ -34,6 +34,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,8 +50,6 @@ public class EventService {
     private final CategoryRepo categoryRepo;
     private final EventRepo eventRepo;
     private final RequestRepo requestRepo;
-    private final LocalDateTime earliestTime = LocalDateTime.now().minusYears(500);
-    private final LocalDateTime latestTime = LocalDateTime.now().plusYears(500);
 
     @PostConstruct
     private void initStatsClient() {
@@ -75,11 +74,16 @@ public class EventService {
         int page = from % size > 0 ? (from / size) + 1 : from / size;
         PageRequest pageRequest = PageRequest.of(page, size);
         var events = eventRepo.findByInitiator(initiator, pageRequest);
+        if (events.isEmpty()) {
+            return List.of();
+        }
+        var earliestTimeLocal = events.stream().map(Event::getCreatedOn).min(LocalDateTime::compareTo);
+        var latestTimeLocal = LocalDateTime.now().plusMinutes(1);
         var uris = events.stream().map(it -> String.format("/events/%s", it.getId())).collect(Collectors.toList());
-        var stats = statsClient.getHits(earliestTime, latestTime, uris, true).stream()
+        var stats = statsClient.getHits(earliestTimeLocal.get(), latestTimeLocal, uris, true).stream()
                 .collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
-        var countByEventIdMap = requestRepo.getCountByEventIdAndStatus(events.stream().map(Event::getId).collect(Collectors.toList()),
-                RequestStatus.CONFIRMED).stream().collect(Collectors.toMap(RequestDto::getEventId, RequestDto::getCount));
+        var countByEventIdMap = requestRepo.getCountByEventIdListAndStatus(events, RequestStatus.CONFIRMED).stream()
+                .collect(Collectors.toMap(RequestDto::getEventId, RequestDto::getCount));
         return events.stream().map(event -> {
             Location location = gson.fromJson(event.getLocation(), Location.class);
             return eventMapper.toOutput(event, location, countByEventIdMap.getOrDefault(event.getId(), 0L), stats.getOrDefault(String.format("/events/%s", event.getId()), 0));
@@ -89,7 +93,9 @@ public class EventService {
     public EventOutput getEventByIdAndUser(long userId, long eventId) {
         var initiator = userRepo.findById(userId).orElseThrow(() -> new NotFoundException("No such initiator was found"));
         var event = eventRepo.findByInitiatorAndId(initiator, eventId);
-        var stats = statsClient.getHits(earliestTime, latestTime, List.of(String.format("/events/%s", eventId)), true).stream()
+        var earliestTimeLocal = event.getCreatedOn();
+        var latestTimeLocal = LocalDateTime.now().plusMinutes(1);
+        var stats = statsClient.getHits(earliestTimeLocal, latestTimeLocal, List.of(String.format("/events/%s", eventId)), true).stream()
                 .collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
         Location location = gson.fromJson(event.getLocation(), Location.class);
         return eventMapper.toOutput(event, location, requestRepo.countByEventAndStatus(event, RequestStatus.CONFIRMED), stats.getOrDefault(String.format("/events/%s", eventId), 0));
@@ -152,13 +158,20 @@ public class EventService {
                                          Boolean onlyAvailable, EventSort sort, int from, int size) {
         var categories = categoriesIds == null ? null : categoryRepo.findByIdIn(categoriesIds);
         var events = searchManyFilters(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, from, size);
+        if (events.isEmpty()) {
+            return List.of();
+        }
+        var earliestTimeLocal = events.stream().map(Event::getCreatedOn).min(LocalDateTime::compareTo);
+        var latestTimeLocal = LocalDateTime.now().plusMinutes(1);
         var uris = events.stream().map(it -> String.format("/events/%s", it.getId())).collect(Collectors.toList());
         statsClient.sendStatsHit("some ip", "explore-with-me-main-service", "/events");
-        var stats = statsClient.getHits(earliestTime, latestTime, uris, true).stream().collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
+        var stats = statsClient.getHits(earliestTimeLocal.get(), latestTimeLocal, uris, true).stream().collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
 
+        var countByEventIdMap = requestRepo.getCountByEventIdListAndStatus(events, RequestStatus.CONFIRMED).stream()
+                .collect(Collectors.toMap(RequestDto::getEventId, RequestDto::getCount));
         var result = events.stream().map(event -> {
             Location location = gson.fromJson(event.getLocation(), Location.class);
-            return eventMapper.toOutput(event, location, requestRepo.countByEventAndStatus(event, RequestStatus.CONFIRMED), (stats.getOrDefault(String.valueOf(event.getId()), 0)));
+            return eventMapper.toOutput(event, location, countByEventIdMap.getOrDefault(event.getId(), 0L), (stats.getOrDefault(String.valueOf(event.getId()), 0)));
         }).collect(Collectors.toList());
         switch (sort) {
             case EVENT_DATE:
@@ -171,26 +184,34 @@ public class EventService {
         return result;
     }
 
-    public List<EventOutput> searchEventAdmin(List<Long> usersIds,
-                                              List<EventState> states,
-                                              List<Long> categoriesIds,
-                                              LocalDateTime rangeStart,
-                                              LocalDateTime rangeEnd,
-                                              int from,
-                                              int size) {
+    public Set<EventOutput> searchEventAdmin(List<Long> usersIds,
+                                             List<EventState> states,
+                                             List<Long> categoriesIds,
+                                             LocalDateTime rangeStart,
+                                             LocalDateTime rangeEnd,
+                                             int from,
+                                             int size) {
         var categories = categoriesIds == null ? null : categoryRepo.findByIdIn(categoriesIds);
         var users = usersIds == null ? null : userRepo.findByIdIn(usersIds);
         List<String> uris = new ArrayList<>();
 
         var events = searchManyFiltersAdmin(users, states, categories, rangeStart, rangeEnd, from, size);
+        if (events.isEmpty()) {
+            return Set.of();
+        }
+        var earliestTimeLocal = events.stream().map(Event::getCreatedOn).min(LocalDateTime::compareTo);
+        var latestTimeLocal = LocalDateTime.now().plusMinutes(1);
         events.forEach(event -> uris.add(String.format("/events/%s", event.getId())));
-        var stats = statsClient.getHits(earliestTime, latestTime, uris, true).stream()
+        var stats = statsClient.getHits(earliestTimeLocal.get(), latestTimeLocal, uris, true).stream()
                 .collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
 
+        var rawRes = requestRepo.getCountByEventIdListAndStatus(events, RequestStatus.CONFIRMED);
+        var countByEventIdMap = rawRes.stream()
+                .collect(Collectors.toMap(RequestDto::getEventId, RequestDto::getCount));
         return events.stream().map(event -> {
             Location location = gson.fromJson(event.getLocation(), Location.class);
-            return eventMapper.toOutput(event, location, requestRepo.countByEventAndStatus(event, RequestStatus.CONFIRMED), (stats.getOrDefault(String.valueOf(event.getId()), 0)));
-        }).collect(Collectors.toList());
+            return eventMapper.toOutput(event, location, countByEventIdMap.getOrDefault(event.getId(), 0L), (stats.getOrDefault(String.valueOf(event.getId()), 0)));
+        }).collect(Collectors.toSet());
     }
 
     public EventOutput getEventById(long eventId) {
@@ -198,9 +219,11 @@ public class EventService {
         if (event == null) {
             throw new NotFoundException("No such event was found");
         }
+        var earliestTimeLocal = event.getCreatedOn();
+        var latestTimeLocal = LocalDateTime.now().plusMinutes(1);
         statsClient.sendStatsHit("some ip", "explore-with-me-main-service", String.format("/events/%s", eventId));
         Location location = gson.fromJson(event.getLocation(), Location.class);
-        var stats = statsClient.getHits(earliestTime, latestTime, List.of(String.format("/events/%s", eventId)), true).stream()
+        var stats = statsClient.getHits(earliestTimeLocal, latestTimeLocal, List.of(String.format("/events/%s", eventId)), true).stream()
                 .collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
         return eventMapper.toOutput(event, location, requestRepo.countByEventAndStatus(event, RequestStatus.CONFIRMED), (stats.getOrDefault(String.valueOf(eventId), 0)));
     }

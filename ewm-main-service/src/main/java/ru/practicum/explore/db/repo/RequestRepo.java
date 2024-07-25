@@ -21,9 +21,8 @@ public interface RequestRepo extends PagingAndSortingRepository<Request, Long> {
 
     List<Request> findByEvent_Initiator(User initiator);
 
-    @Query("SELECT new ru.practicum.explore.model.request.RequestDto(r.id, count(r.requester)) FROM Request r WHERE r.id in ?1 and r.status = ?2 GROUP BY r.id")
-    List<RequestDto> getCountByEventIdAndStatus(Collection<Long> eventIds, RequestStatus status);
-
+    @Query("SELECT new ru.practicum.explore.model.request.RequestDto(r.event.id, count(r.requester)) FROM Request r WHERE r.event in ?1 and r.status = ?2 GROUP BY r.id")
+    List<RequestDto> getCountByEventIdListAndStatus(Collection<Event> events, RequestStatus status);
 
     long countByEventAndStatus(Event event, RequestStatus status);
 
