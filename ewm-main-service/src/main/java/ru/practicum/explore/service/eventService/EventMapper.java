@@ -1,16 +1,8 @@
 package ru.practicum.explore.service.eventService;
 
-import org.mapstruct.InjectionStrategy;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.*;
 import ru.practicum.explore.model.category.Category;
-import ru.practicum.explore.model.event.Event;
-import ru.practicum.explore.model.event.EventCreateDto;
-import ru.practicum.explore.model.event.EventOutput;
-import ru.practicum.explore.model.event.EventUpdateDto;
-import ru.practicum.explore.model.event.Location;
+import ru.practicum.explore.model.event.*;
 import ru.practicum.explore.model.user.User;
 
 import java.time.LocalDateTime;

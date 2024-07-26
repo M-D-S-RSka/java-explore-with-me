@@ -3,14 +3,7 @@ package ru.practicum.explore.rest.event;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.practicum.explore.model.event.EventCreateDto;
 import ru.practicum.explore.model.event.EventOutput;
 import ru.practicum.explore.model.event.EventUpdateUserDto;
@@ -33,8 +26,8 @@ public class PrivateEventRestHandler {
 
     @GetMapping
     public List<EventOutput> getUserMadeEvents(@PathVariable long userId,
-                                               @RequestParam(defaultValue = "0") int from,
-                                               @RequestParam(defaultValue = "10") int size) {
+                                               @RequestParam(required = false, defaultValue = "0") int from,
+                                               @RequestParam(required = false, defaultValue = "10") int size) {
         return eventService.getUsersEvents(userId, from, size);
     }
 

@@ -1,11 +1,7 @@
 package ru.practicum.explore.rest.compilation;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.practicum.explore.model.compilation.CompilationOutput;
 import ru.practicum.explore.service.compilationService.CompilationService;
 
@@ -20,8 +16,8 @@ public class CompilationRestHandler {
 
     @GetMapping
     public List<CompilationOutput> getCompilations(@RequestParam(required = false) Boolean pinned,
-                                                   @RequestParam(defaultValue = "0") int from,
-                                                   @RequestParam(defaultValue = "10") int size) {
+                                                   @RequestParam(required = false, defaultValue = "0") int from,
+                                                   @RequestParam(required = false, defaultValue = "10") int size) {
         return compilationService.getCompilations(pinned, from, size);
     }
 

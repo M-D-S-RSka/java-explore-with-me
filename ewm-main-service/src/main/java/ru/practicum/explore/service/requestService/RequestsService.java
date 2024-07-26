@@ -9,11 +9,7 @@ import ru.practicum.explore.model.event.Event;
 import ru.practicum.explore.model.event.EventState;
 import ru.practicum.explore.model.exceptions.ConflictException;
 import ru.practicum.explore.model.exceptions.NotFoundException;
-import ru.practicum.explore.model.request.ConfirmeRequestsInput;
-import ru.practicum.explore.model.request.GroupedRequestsOutput;
-import ru.practicum.explore.model.request.Request;
-import ru.practicum.explore.model.request.RequestOutput;
-import ru.practicum.explore.model.request.RequestStatus;
+import ru.practicum.explore.model.request.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
