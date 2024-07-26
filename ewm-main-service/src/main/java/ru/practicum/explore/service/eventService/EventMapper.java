@@ -1,8 +1,16 @@
 package ru.practicum.explore.service.eventService;
 
-import org.mapstruct.*;
+import org.mapstruct.InjectionStrategy;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import ru.practicum.explore.model.category.Category;
-import ru.practicum.explore.model.event.*;
+import ru.practicum.explore.model.event.Event;
+import ru.practicum.explore.model.event.EventCreateDto;
+import ru.practicum.explore.model.event.EventOutput;
+import ru.practicum.explore.model.event.EventUpdateDto;
+import ru.practicum.explore.model.event.Location;
 import ru.practicum.explore.model.user.User;
 
 import java.time.LocalDateTime;
@@ -13,8 +21,9 @@ public interface EventMapper {
     @Mapping(target = "category", source = "category")
     @Mapping(target = "initiator", source = "initiator")
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "location", source = "location")
-    Event fromInput(EventCreateDto eventInput, Category category, User initiator, LocalDateTime createdOn, String location);
+    @Mapping(target = "lat", source = "lat")
+    @Mapping(target = "lon", source = "lon")
+    Event fromInput(EventCreateDto eventInput, Category category, User initiator, LocalDateTime createdOn, Double lat, Double lon);
 
     @Mapping(target = "location", source = "location")
     @Mapping(target = "confirmedRequests", source = "confirmedRequests")
@@ -24,7 +33,8 @@ public interface EventMapper {
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
-    @Mapping(target = "location", ignore = true)
+    @Mapping(target = "lat", ignore = true)
+    @Mapping(target = "lon", ignore = true)
     @Mapping(target = "eventDate", ignore = true)
     @Mapping(target = "initiator", ignore = true)
     @Mapping(target = "state", ignore = true)
