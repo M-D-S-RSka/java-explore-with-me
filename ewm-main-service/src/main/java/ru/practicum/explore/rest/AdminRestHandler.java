@@ -29,7 +29,6 @@ import ru.practicum.explore.service.userService.UserService;
 import ru.practicum.explore.utilits.Constants;
 
 import javax.validation.Valid;
-import javax.validation.ValidationException;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import java.time.LocalDateTime;
