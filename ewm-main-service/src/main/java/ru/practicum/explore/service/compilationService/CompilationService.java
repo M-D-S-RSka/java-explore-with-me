@@ -112,7 +112,7 @@ public class CompilationService {
 
     private List<EventOutput> mapEventToOutput(Compilation comp, Map<String, Integer> stats) {
         return comp.getEvents().stream().map((Event event) -> {
-            Location location =new Location(event.getLat(), event.getLon());
+            Location location = new Location(event.getLat(), event.getLon());
             return eventMapper.toOutput(event, location, requestRepo.countByEventAndStatus(event, RequestStatus.CONFIRMED), stats.getOrDefault(String.format("/events/%s", event.getId()), 0));
         }).collect(Collectors.toList());
     }
