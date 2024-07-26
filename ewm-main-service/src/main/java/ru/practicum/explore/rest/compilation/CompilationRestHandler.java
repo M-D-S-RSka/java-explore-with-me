@@ -16,8 +16,8 @@ public class CompilationRestHandler {
 
     @GetMapping
     public List<CompilationOutput> getCompilations(@RequestParam(required = false) Boolean pinned,
-                                                   @RequestParam(required = false, defaultValue = "0") int from,
-                                                   @RequestParam(required = false, defaultValue = "10") int size) {
+                                                   @RequestParam(defaultValue = "0") int from,
+                                                   @RequestParam(defaultValue = "10") int size) {
         return compilationService.getCompilations(pinned, from, size);
     }
 

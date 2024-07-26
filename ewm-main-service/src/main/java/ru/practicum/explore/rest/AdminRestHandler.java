@@ -51,9 +51,9 @@ public class AdminRestHandler {
     }
 
     @GetMapping("/users")
-    public List<UserDto> getUsers(@RequestParam(required = false, defaultValue = "") List<Long> ids,
-                                  @RequestParam(required = false, defaultValue = "0") int from,
-                                  @RequestParam(required = false, defaultValue = "10") int size) {
+    public List<UserDto> getUsers(@RequestParam(defaultValue = "") List<Long> ids,
+                                  @RequestParam(defaultValue = "0") int from,
+                                  @RequestParam(defaultValue = "10") int size) {
         return userService.getUsers(ids, from, size);
     }
 
