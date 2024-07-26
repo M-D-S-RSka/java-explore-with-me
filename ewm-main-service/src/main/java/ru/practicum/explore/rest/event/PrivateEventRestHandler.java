@@ -33,8 +33,8 @@ public class PrivateEventRestHandler {
 
     @GetMapping
     public List<EventOutput> getUserMadeEvents(@PathVariable long userId,
-                                               @RequestParam(required = false, defaultValue = "0") int from,
-                                               @RequestParam(required = false, defaultValue = "10") int size) {
+                                               @RequestParam(defaultValue = "0") int from,
+                                               @RequestParam(defaultValue = "10") int size) {
         return eventService.getUsersEvents(userId, from, size);
     }
 

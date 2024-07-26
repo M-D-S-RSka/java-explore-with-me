@@ -31,9 +31,9 @@ public class EventRestHandler {
                                         @RequestParam(required = false) String rangeStart,
                                         @RequestParam(required = false) String rangeEnd,
                                         @RequestParam(required = false) Boolean onlyAvailable,
-                                        @RequestParam(required = false, defaultValue = "VIEWS") EventSort sort,
-                                        @RequestParam(required = false, defaultValue = "0") int from,
-                                        @RequestParam(required = false, defaultValue = "10") int size) {
+                                        @RequestParam(defaultValue = "VIEWS") EventSort sort,
+                                        @RequestParam(defaultValue = "0") int from,
+                                        @RequestParam(defaultValue = "10") int size) {
         try {
             var rangeStartTime = rangeStart == null ? null : LocalDateTime.parse(rangeStart, dtf);
             var rangeEndTime = rangeEnd == null ? null : LocalDateTime.parse(rangeEnd, dtf);
