@@ -36,8 +36,7 @@ public class Event {
     private String annotation;
     private String description;
     private LocalDateTime createdOn;
-    private Double lat;
-    private Double lon;
+    private String location;
     private LocalDateTime eventDate;
     private String title;
     private boolean paid;

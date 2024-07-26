@@ -14,7 +14,14 @@ import ru.practicum.explore.db.repo.EventRepo;
 import ru.practicum.explore.db.repo.RequestRepo;
 import ru.practicum.explore.db.repo.UserRepo;
 import ru.practicum.explore.model.category.Category;
-import ru.practicum.explore.model.event.*;
+import ru.practicum.explore.model.event.Event;
+import ru.practicum.explore.model.event.EventCreateDto;
+import ru.practicum.explore.model.event.EventOutput;
+import ru.practicum.explore.model.event.EventSort;
+import ru.practicum.explore.model.event.EventState;
+import ru.practicum.explore.model.event.EventUpdateAdminDto;
+import ru.practicum.explore.model.event.EventUpdateUserDto;
+import ru.practicum.explore.model.event.Location;
 import ru.practicum.explore.model.exceptions.ConflictException;
 import ru.practicum.explore.model.exceptions.NotFoundException;
 import ru.practicum.explore.model.request.RequestDto;
@@ -54,12 +61,11 @@ public class EventService {
         if (eventInput.getRequestModeration() == null) eventInput.setRequestModeration(true);
         var category = categoryRepo.findById(eventInput.getCategory()).orElse(null);
         var initiator = userRepo.findById(userId).orElseThrow(() -> new NotFoundException("No such initiator was found"));
-        Double lat = eventInput.getLocation().getLat();
-        Double lon = eventInput.getLocation().getLon();
-        var event = eventMapper.fromInput(eventInput, category, initiator, LocalDateTime.now(), lat, lon);
+        var locationStr = gson.toJson(eventInput.getLocation());
+        var event = eventMapper.fromInput(eventInput, category, initiator, LocalDateTime.now(), locationStr);
         event.setState(EventState.PENDING);
         var savedEvent = eventRepo.save(event);
-        Location location = new Location(event.getLat(), event.getLon());
+        Location location = gson.fromJson(savedEvent.getLocation(), Location.class);
         return eventMapper.toOutput(savedEvent, location, 0, 0);
     }
 
@@ -79,7 +85,7 @@ public class EventService {
         var countByEventIdMap = requestRepo.getCountByEventIdListAndStatus(events, RequestStatus.CONFIRMED).stream()
                 .collect(Collectors.toMap(RequestDto::getEventId, RequestDto::getCount));
         return events.stream().map(event -> {
-            Location location = new Location(event.getLat(), event.getLon());
+            Location location = gson.fromJson(event.getLocation(), Location.class);
             return eventMapper.toOutput(event, location, countByEventIdMap.getOrDefault(event.getId(), 0L), stats.getOrDefault(String.format("/events/%s", event.getId()), 0));
         }).collect(Collectors.toList());
     }
@@ -91,7 +97,7 @@ public class EventService {
         var latestTimeLocal = LocalDateTime.now().plusMinutes(1);
         var stats = statsClient.getHits(earliestTimeLocal, latestTimeLocal, List.of(String.format("/events/%s", eventId)), true).stream()
                 .collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
-        Location location = new Location(event.getLat(), event.getLon());
+        Location location = gson.fromJson(event.getLocation(), Location.class);
         return eventMapper.toOutput(event, location, requestRepo.countByEventAndStatus(event, RequestStatus.CONFIRMED), stats.getOrDefault(String.format("/events/%s", eventId), 0));
     }
 
@@ -119,7 +125,7 @@ public class EventService {
             }
         }
         var savedEvent = eventRepo.save(event);
-        Location location = new Location(savedEvent.getLat(), event.getLon());
+        Location location = gson.fromJson(savedEvent.getLocation(), Location.class);
         return eventMapper.toOutput(savedEvent, location, 0, 0);
     }
 
@@ -143,7 +149,7 @@ public class EventService {
             }
         }
         var savedEvent = eventRepo.save(event);
-        Location location = new Location(savedEvent.getLat(), event.getLon());
+        Location location = gson.fromJson(savedEvent.getLocation(), Location.class);
         return eventMapper.toOutput(savedEvent, location, 0, 0);
     }
 
@@ -164,7 +170,7 @@ public class EventService {
         var countByEventIdMap = requestRepo.getCountByEventIdListAndStatus(events, RequestStatus.CONFIRMED).stream()
                 .collect(Collectors.toMap(RequestDto::getEventId, RequestDto::getCount));
         var result = events.stream().map(event -> {
-            Location location = new Location(event.getLat(), event.getLon());
+            Location location = gson.fromJson(event.getLocation(), Location.class);
             return eventMapper.toOutput(event, location, countByEventIdMap.getOrDefault(event.getId(), 0L), (stats.getOrDefault(String.valueOf(event.getId()), 0)));
         }).collect(Collectors.toList());
         switch (sort) {
@@ -203,7 +209,7 @@ public class EventService {
         var countByEventIdMap = rawRes.stream()
                 .collect(Collectors.toMap(RequestDto::getEventId, RequestDto::getCount));
         return events.stream().map(event -> {
-            Location location = new Location(event.getLat(), event.getLon());
+            Location location = gson.fromJson(event.getLocation(), Location.class);
             return eventMapper.toOutput(event, location, countByEventIdMap.getOrDefault(event.getId(), 0L), (stats.getOrDefault(String.valueOf(event.getId()), 0)));
         }).collect(Collectors.toSet());
     }
@@ -216,7 +222,7 @@ public class EventService {
         var earliestTimeLocal = event.getCreatedOn();
         var latestTimeLocal = LocalDateTime.now().plusMinutes(1);
         statsClient.sendStatsHit("some ip", "explore-with-me-main-service", String.format("/events/%s", eventId));
-        Location location = new Location(event.getLat(), event.getLon());
+        Location location = gson.fromJson(event.getLocation(), Location.class);
         var stats = statsClient.getHits(earliestTimeLocal, latestTimeLocal, List.of(String.format("/events/%s", eventId)), true).stream()
                 .collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
         return eventMapper.toOutput(event, location, requestRepo.countByEventAndStatus(event, RequestStatus.CONFIRMED), (stats.getOrDefault(String.valueOf(eventId), 0)));
