@@ -3,9 +3,11 @@ package ru.practicum.explore.model.event;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import ru.practicum.explore.model.category.CategoryDto;
+import ru.practicum.explore.model.comments.CommentOutput;
 import ru.practicum.explore.model.user.UserOutput;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class EventOutput {
@@ -26,5 +28,5 @@ public class EventOutput {
     private String state;
     private String title;
     private int views;
-
+    private List<CommentOutput> comments;
 }

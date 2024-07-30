@@ -6,6 +6,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import ru.practicum.explore.model.category.Category;
+import ru.practicum.explore.model.comments.CommentOutput;
 import ru.practicum.explore.model.event.Event;
 import ru.practicum.explore.model.event.EventCreateDto;
 import ru.practicum.explore.model.event.EventOutput;
@@ -14,6 +15,7 @@ import ru.practicum.explore.model.event.Location;
 import ru.practicum.explore.model.user.User;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.FIELD)
 public interface EventMapper {
@@ -28,7 +30,8 @@ public interface EventMapper {
     @Mapping(target = "location", source = "location")
     @Mapping(target = "confirmedRequests", source = "confirmedRequests")
     @Mapping(target = "views", source = "views")
-    EventOutput toOutput(Event event, Location location, long confirmedRequests, int views);
+    @Mapping(target = "comments", source = "comments")
+    EventOutput toOutput(Event event, Location location, long confirmedRequests, int views, List<CommentOutput> comments);
 
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "id", ignore = true)
