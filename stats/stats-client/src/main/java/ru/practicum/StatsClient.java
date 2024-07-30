@@ -21,6 +21,11 @@ public class StatsClient {
     private final RestTemplate rest = new RestTemplate();
     private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd%20HH:mm:ss");
     private final Gson gson = new Gson();
+    private final String baseUrl;
+
+    public StatsClient(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
 
     public ResponseEntity<HitInput> sendStatsHit(String ip, String app, String uri) {
         var input = new HitInput();
@@ -29,7 +34,7 @@ public class StatsClient {
         input.setApp(app);
         input.setTimestamp(LocalDateTime.now());
 
-        return rest.postForEntity("http://localhost:9090/hit", input, HitInput.class);
+        return rest.postForEntity(baseUrl + "/hit", input, HitInput.class);
     }
 
     public List<HitOutput> getHits(LocalDateTime startTime,
@@ -41,7 +46,7 @@ public class StatsClient {
             uris.append(String.format("&uris=%s", it));
         });
         try {
-            var url = new URL(String.format("http://localhost:9090/stats?start=%s&end=%s%s&unique=%s", startTime.format(dtf), endTime.format(dtf), uris, unique));
+            var url = new URL(String.format(baseUrl + "/stats?start=%s&end=%s%s&unique=%s", startTime.format(dtf), endTime.format(dtf), uris, unique));
             var con = url.openConnection();
             var baos = new ByteArrayOutputStream();
             try (var is = con.getInputStream()) {
