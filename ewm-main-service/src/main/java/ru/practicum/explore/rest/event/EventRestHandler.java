@@ -11,6 +11,7 @@ import ru.practicum.explore.model.event.EventSort;
 import ru.practicum.explore.service.eventService.EventService;
 import ru.practicum.explore.utilits.Constants;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.ValidationException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -46,7 +47,7 @@ public class EventRestHandler {
     }
 
     @GetMapping("/{eventId}")
-    public EventOutput getEventById(@PathVariable long eventId) {
-        return eventService.getEventById(eventId);
+    public EventOutput getEventById(@PathVariable long eventId, HttpServletRequest request) {
+        return eventService.getEventById(eventId, request.getRemoteAddr(), request.getContextPath());
     }
 }

@@ -45,6 +45,8 @@ public class EventService {
     private final Gson gson = new Gson();
     @Value("${server.url}")
     private String serverUrl;
+    @Value("${explore.app}")
+    private String appName;
     private StatsClient statsClient;
     private final CommentRepo commentRepo;
     private final UserRepo userRepo;
@@ -169,7 +171,7 @@ public class EventService {
         var earliestTimeLocal = events.stream().map(Event::getCreatedOn).min(LocalDateTime::compareTo);
         var latestTimeLocal = LocalDateTime.now().plusMinutes(1);
         var uris = events.stream().map(it -> String.format("/events/%s", it.getId())).collect(Collectors.toList());
-        statsClient.sendStatsHit("some ip", "explore-with-me-main-service", "/events");
+        statsClient.sendStatsHit("some ip", appName, "/events");
         var stats = statsClient.getHits(earliestTimeLocal.get(), latestTimeLocal, uris, true).stream().collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
         var eventsComments = commentRepo.findByEventIn(events).stream().collect(Collectors.groupingBy(Comment::getEvent));
 
@@ -223,14 +225,14 @@ public class EventService {
         }).collect(Collectors.toSet());
     }
 
-    public EventOutput getEventById(long eventId) {
+    public EventOutput getEventById(long eventId, String ip, String path) {
         var event = eventRepo.findByIdAndState(eventId, EventState.PUBLISHED);
         if (event == null) {
             throw new NotFoundException("No such event was found");
         }
         var earliestTimeLocal = event.getCreatedOn();
         var latestTimeLocal = LocalDateTime.now().plusMinutes(1);
-        statsClient.sendStatsHit("some ip", "explore-with-me-main-service", String.format("/events/%s", eventId));
+        statsClient.sendStatsHit(ip, appName, path);
         Location location = new Location(event.getLat(), event.getLon());
         var stats = statsClient.getHits(earliestTimeLocal, latestTimeLocal, List.of(String.format("/events/%s", eventId)), true).stream()
                 .collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
