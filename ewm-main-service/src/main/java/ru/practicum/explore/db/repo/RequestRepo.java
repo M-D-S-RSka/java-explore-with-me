@@ -27,4 +27,6 @@ public interface RequestRepo extends PagingAndSortingRepository<Request, Long> {
     long countByEventAndStatus(Event event, RequestStatus status);
 
     Request findByRequesterAndEvent(User requester, Event event);
+
+    List<Request> findByEventAndStatus(Event event, RequestStatus status);
 }

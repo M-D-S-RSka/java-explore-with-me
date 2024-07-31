@@ -9,11 +9,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import ru.practicum.StatsClient;
 import ru.practicum.explore.db.EventSpec;
-import ru.practicum.explore.db.repo.CategoryRepo;
-import ru.practicum.explore.db.repo.EventRepo;
-import ru.practicum.explore.db.repo.RequestRepo;
-import ru.practicum.explore.db.repo.UserRepo;
+import ru.practicum.explore.db.repo.*;
 import ru.practicum.explore.model.category.Category;
+import ru.practicum.explore.model.comments.Comment;
 import ru.practicum.explore.model.event.Event;
 import ru.practicum.explore.model.event.EventCreateDto;
 import ru.practicum.explore.model.event.EventOutput;
@@ -27,6 +25,7 @@ import ru.practicum.explore.model.exceptions.NotFoundException;
 import ru.practicum.explore.model.request.RequestDto;
 import ru.practicum.explore.model.request.RequestStatus;
 import ru.practicum.explore.model.user.User;
+import ru.practicum.explore.service.commentsService.CommentMapper;
 import ru.practicum.model.HitOutput;
 
 import javax.annotation.PostConstruct;
@@ -41,11 +40,15 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @PropertySource(value = "application.properties")
 public class EventService {
+    private final CommentMapper commentMapper;
     private final EventMapper eventMapper;
     private final Gson gson = new Gson();
     @Value("${server.url}")
     private String serverUrl;
+    @Value("${explore.app}")
+    private String appName;
     private StatsClient statsClient;
+    private final CommentRepo commentRepo;
     private final UserRepo userRepo;
     private final CategoryRepo categoryRepo;
     private final EventRepo eventRepo;
@@ -67,7 +70,7 @@ public class EventService {
         event.setState(EventState.PENDING);
         var savedEvent = eventRepo.save(event);
         Location location = new Location(event.getLat(), event.getLon());
-        return eventMapper.toOutput(savedEvent, location, 0, 0);
+        return eventMapper.toOutput(savedEvent, location, 0, 0, List.of());
     }
 
     public List<EventOutput> getUsersEvents(long userId, int from, int size) {
@@ -83,11 +86,13 @@ public class EventService {
         var uris = events.stream().map(it -> String.format("/events/%s", it.getId())).collect(Collectors.toList());
         var stats = statsClient.getHits(earliestTimeLocal.get(), latestTimeLocal, uris, true).stream()
                 .collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
+        var eventsComments = commentRepo.findByEventIn(events).stream().collect(Collectors.groupingBy(Comment::getEvent));
         var countByEventIdMap = requestRepo.getCountByEventIdListAndStatus(events, RequestStatus.CONFIRMED).stream()
                 .collect(Collectors.toMap(RequestDto::getEventId, RequestDto::getCount));
         return events.stream().map(event -> {
             Location location = new Location(event.getLat(), event.getLon());
-            return eventMapper.toOutput(event, location, countByEventIdMap.getOrDefault(event.getId(), 0L), stats.getOrDefault(String.format("/events/%s", event.getId()), 0));
+            return eventMapper.toOutput(event, location, countByEventIdMap.getOrDefault(event.getId(), 0L), stats.getOrDefault(String.format("/events/%s", event.getId()), 0),
+                    eventsComments.getOrDefault(event, new ArrayList<>()).stream().map(commentMapper::toOutput).collect(Collectors.toList()));
         }).collect(Collectors.toList());
     }
 
@@ -99,7 +104,8 @@ public class EventService {
         var stats = statsClient.getHits(earliestTimeLocal, latestTimeLocal, List.of(String.format("/events/%s", eventId)), true).stream()
                 .collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
         Location location = new Location(event.getLat(), event.getLon());
-        return eventMapper.toOutput(event, location, requestRepo.countByEventAndStatus(event, RequestStatus.CONFIRMED), stats.getOrDefault(String.format("/events/%s", eventId), 0));
+        return eventMapper.toOutput(event, location, requestRepo.countByEventAndStatus(event, RequestStatus.CONFIRMED), stats.getOrDefault(String.format("/events/%s", eventId), 0),
+                commentRepo.findByEvent(event).stream().map(commentMapper::toOutput).collect(Collectors.toList()));
     }
 
     public EventOutput updateEvent(long userId, long eventId, EventUpdateUserDto eventInput) {
@@ -127,7 +133,7 @@ public class EventService {
         }
         var savedEvent = eventRepo.save(event);
         Location location = new Location(savedEvent.getLat(), event.getLon());
-        return eventMapper.toOutput(savedEvent, location, 0, 0);
+        return eventMapper.toOutput(savedEvent, location, 0, 0, List.of());
     }
 
     public EventOutput updateEventAdmin(long eventId, EventUpdateAdminDto eventInput) {
@@ -151,12 +157,12 @@ public class EventService {
         }
         var savedEvent = eventRepo.save(event);
         Location location = new Location(savedEvent.getLat(), event.getLon());
-        return eventMapper.toOutput(savedEvent, location, 0, 0);
+        return eventMapper.toOutput(savedEvent, location, 0, 0, List.of());
     }
 
     public List<EventOutput> searchEvent(String text, List<Long> categoriesIds, Boolean paid,
                                          LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                         Boolean onlyAvailable, EventSort sort, int from, int size) {
+                                         Boolean onlyAvailable, EventSort sort, int from, int size, String ip, String path) {
         var categories = categoriesIds == null ? null : categoryRepo.findByIdIn(categoriesIds);
         var events = searchManyFilters(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, from, size);
         if (events.isEmpty()) {
@@ -165,14 +171,16 @@ public class EventService {
         var earliestTimeLocal = events.stream().map(Event::getCreatedOn).min(LocalDateTime::compareTo);
         var latestTimeLocal = LocalDateTime.now().plusMinutes(1);
         var uris = events.stream().map(it -> String.format("/events/%s", it.getId())).collect(Collectors.toList());
-        statsClient.sendStatsHit("some ip", "explore-with-me-main-service", "/events");
+        statsClient.sendStatsHit(ip, appName, path);
         var stats = statsClient.getHits(earliestTimeLocal.get(), latestTimeLocal, uris, true).stream().collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
+        var eventsComments = commentRepo.findByEventIn(events).stream().collect(Collectors.groupingBy(Comment::getEvent));
 
         var countByEventIdMap = requestRepo.getCountByEventIdListAndStatus(events, RequestStatus.CONFIRMED).stream()
                 .collect(Collectors.toMap(RequestDto::getEventId, RequestDto::getCount));
         var result = events.stream().map(event -> {
             Location location = new Location(event.getLat(), event.getLon());
-            return eventMapper.toOutput(event, location, countByEventIdMap.getOrDefault(event.getId(), 0L), (stats.getOrDefault(String.valueOf(event.getId()), 0)));
+            return eventMapper.toOutput(event, location, countByEventIdMap.getOrDefault(event.getId(), 0L), (stats.getOrDefault(String.valueOf(event.getId()), 0)),
+                    eventsComments.getOrDefault(event, new ArrayList<>()).stream().map(commentMapper::toOutput).collect(Collectors.toList()));
         }).collect(Collectors.toList());
         switch (sort) {
             case EVENT_DATE:
@@ -205,28 +213,31 @@ public class EventService {
         events.forEach(event -> uris.add(String.format("/events/%s", event.getId())));
         var stats = statsClient.getHits(earliestTimeLocal.get(), latestTimeLocal, uris, true).stream()
                 .collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
+        var eventsComments = commentRepo.findByEventIn(events).stream().collect(Collectors.groupingBy(Comment::getEvent));
 
         var rawRes = requestRepo.getCountByEventIdListAndStatus(events, RequestStatus.CONFIRMED);
         var countByEventIdMap = rawRes.stream()
                 .collect(Collectors.toMap(RequestDto::getEventId, RequestDto::getCount));
         return events.stream().map(event -> {
             Location location = new Location(event.getLat(), event.getLon());
-            return eventMapper.toOutput(event, location, countByEventIdMap.getOrDefault(event.getId(), 0L), (stats.getOrDefault(String.valueOf(event.getId()), 0)));
+            return eventMapper.toOutput(event, location, countByEventIdMap.getOrDefault(event.getId(), 0L), (stats.getOrDefault(String.valueOf(event.getId()), 0)),
+                    eventsComments.getOrDefault(event, new ArrayList<>()).stream().map(commentMapper::toOutput).collect(Collectors.toList()));
         }).collect(Collectors.toSet());
     }
 
-    public EventOutput getEventById(long eventId) {
+    public EventOutput getEventById(long eventId, String ip, String path) {
         var event = eventRepo.findByIdAndState(eventId, EventState.PUBLISHED);
         if (event == null) {
             throw new NotFoundException("No such event was found");
         }
         var earliestTimeLocal = event.getCreatedOn();
         var latestTimeLocal = LocalDateTime.now().plusMinutes(1);
-        statsClient.sendStatsHit("some ip", "explore-with-me-main-service", String.format("/events/%s", eventId));
+        statsClient.sendStatsHit(ip, appName, path);
         Location location = new Location(event.getLat(), event.getLon());
         var stats = statsClient.getHits(earliestTimeLocal, latestTimeLocal, List.of(String.format("/events/%s", eventId)), true).stream()
                 .collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
-        return eventMapper.toOutput(event, location, requestRepo.countByEventAndStatus(event, RequestStatus.CONFIRMED), (stats.getOrDefault(String.valueOf(eventId), 0)));
+        return eventMapper.toOutput(event, location, requestRepo.countByEventAndStatus(event, RequestStatus.CONFIRMED), (stats.getOrDefault(String.valueOf(eventId), 0)),
+                commentRepo.findByEvent(event).stream().map(commentMapper::toOutput).collect(Collectors.toList()));
     }
 
 
