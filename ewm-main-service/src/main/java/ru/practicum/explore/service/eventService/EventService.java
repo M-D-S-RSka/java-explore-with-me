@@ -162,7 +162,7 @@ public class EventService {
 
     public List<EventOutput> searchEvent(String text, List<Long> categoriesIds, Boolean paid,
                                          LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                         Boolean onlyAvailable, EventSort sort, int from, int size) {
+                                         Boolean onlyAvailable, EventSort sort, int from, int size, String ip, String path) {
         var categories = categoriesIds == null ? null : categoryRepo.findByIdIn(categoriesIds);
         var events = searchManyFilters(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, from, size);
         if (events.isEmpty()) {
@@ -171,7 +171,7 @@ public class EventService {
         var earliestTimeLocal = events.stream().map(Event::getCreatedOn).min(LocalDateTime::compareTo);
         var latestTimeLocal = LocalDateTime.now().plusMinutes(1);
         var uris = events.stream().map(it -> String.format("/events/%s", it.getId())).collect(Collectors.toList());
-        statsClient.sendStatsHit("some ip", appName, "/events");
+        statsClient.sendStatsHit(ip, appName, path);
         var stats = statsClient.getHits(earliestTimeLocal.get(), latestTimeLocal, uris, true).stream().collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
         var eventsComments = commentRepo.findByEventIn(events).stream().collect(Collectors.groupingBy(Comment::getEvent));
 
