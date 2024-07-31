@@ -81,7 +81,14 @@ public class CompilationService {
     private CompilationOutput mapToOutput(Compilation compilation, List<Event> events) {
         var savedCompilation = compilationRepo.save(compilation);
         var uris = events == null ? new ArrayList<String>() : events.stream().map(it -> String.format("/events/%s", it.getId())).collect(Collectors.toList());
-        var stats = statsClient.getHits(earliestTime, latestTime, uris, true).stream()
+        LocalDateTime earliestTimeLocal;
+        if (events == null || events.isEmpty()) {
+            earliestTimeLocal = LocalDateTime.now();
+        } else {
+            earliestTimeLocal = events.stream().map(Event::getCreatedOn).min(LocalDateTime::compareTo).get();
+        }
+        var latestTimeLocal = LocalDateTime.now().plusMinutes(1);
+        var stats = statsClient.getHits(earliestTimeLocal, latestTimeLocal, uris, true).stream()
                 .collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
         var eventsComments = events == null ? new HashMap<Event, List<Comment>>() : commentRepo.findByEventIn(events).stream().collect(Collectors.groupingBy(Comment::getEvent));
         var eventsOut = savedCompilation.getEvents() == null ? null : savedCompilation.getEvents().stream().map(event -> {
@@ -101,7 +108,14 @@ public class CompilationService {
             uris.addAll(comp.getEvents().stream().map(it -> String.format("/events/%s", it.getId())).collect(Collectors.toList()));
             events.addAll(comp.getEvents());
         }
-        var stats = statsClient.getHits(earliestTime, latestTime, uris, true).stream()
+        LocalDateTime earliestTimeLocal;
+        if (events == null || events.isEmpty()) {
+            earliestTimeLocal = LocalDateTime.now();
+        } else {
+            earliestTimeLocal = events.stream().map(Event::getCreatedOn).min(LocalDateTime::compareTo).get();
+        }
+        var latestTimeLocal = LocalDateTime.now().plusMinutes(1);
+        var stats = statsClient.getHits(earliestTimeLocal, latestTimeLocal, uris, true).stream()
                 .collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
         var eventsComments = commentRepo.findByEventIn(events).stream().distinct().collect(Collectors.groupingBy(Comment::getEvent));
         return compilations.stream().map(it -> {
@@ -113,7 +127,14 @@ public class CompilationService {
     public CompilationOutput getCompilation(Long compId) {
         var comp = compilationRepo.findById(compId).orElseThrow(() -> new NotFoundException("No such compilation was found"));
         var uris = comp.getEvents().stream().map(it -> String.format("/events/%s", it.getId())).collect(Collectors.toList());
-        var stats = statsClient.getHits(earliestTime, latestTime, uris, true).stream()
+        LocalDateTime earliestTimeLocal;
+        if (comp.getEvents() == null || comp.getEvents().isEmpty()) {
+            earliestTimeLocal = LocalDateTime.now();
+        } else {
+            earliestTimeLocal = comp.getEvents().stream().map(Event::getCreatedOn).min(LocalDateTime::compareTo).get();
+        }
+        var latestTimeLocal = LocalDateTime.now().plusMinutes(1);
+        var stats = statsClient.getHits(earliestTimeLocal, latestTimeLocal, uris, true).stream()
                 .collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
         var eventsComments = commentRepo.findByEventIn(comp.getEvents()).stream().collect(Collectors.groupingBy(Comment::getEvent));
         var eventsOut = mapEventToOutput(comp, stats, eventsComments);
