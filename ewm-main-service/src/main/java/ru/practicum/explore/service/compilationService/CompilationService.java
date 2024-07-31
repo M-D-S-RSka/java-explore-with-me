@@ -81,11 +81,9 @@ public class CompilationService {
     private CompilationOutput mapToOutput(Compilation compilation, List<Event> events) {
         var savedCompilation = compilationRepo.save(compilation);
         var uris = events == null ? new ArrayList<String>() : events.stream().map(it -> String.format("/events/%s", it.getId())).collect(Collectors.toList());
-        var earliestTimeLocal = Objects.requireNonNull(events).stream().map(Event::getCreatedOn).min(LocalDateTime::compareTo);
-        var latestTimeLocal = LocalDateTime.now().plusMinutes(1);
-        var stats = statsClient.getHits(earliestTimeLocal.get(), latestTimeLocal, uris, true).stream()
+        var stats = statsClient.getHits(earliestTime, latestTime, uris, true).stream()
                 .collect(Collectors.toMap((HitOutput it) -> it.getUri().substring(it.getUri().lastIndexOf("/") + 1), (HitOutput::getHits)));
-        var eventsComments = commentRepo.findByEventIn(events).stream().collect(Collectors.groupingBy(Comment::getEvent));
+        var eventsComments = events == null ? new HashMap<Event, List<Comment>>() : commentRepo.findByEventIn(events).stream().collect(Collectors.groupingBy(Comment::getEvent));
         var eventsOut = savedCompilation.getEvents() == null ? null : savedCompilation.getEvents().stream().map(event -> {
             Location location = new Location(event.getLat(), event.getLon());
             return eventMapper.toOutput(event, location, requestRepo.countByEventAndStatus(event, RequestStatus.CONFIRMED),
